@@ -3,7 +3,7 @@ name: Deploy to Fly.io
 on:
   push:
     branches:
-      - main  # deploy on push to main branch
+      - main
 
 jobs:
   deploy:
@@ -14,37 +14,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Setup Node
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "20"
+      # Step 2: Setup Fly.io
+      - uses: superfly/flyctl-actions/setup-flyctl@master
 
-      # Step 3: Install dependencies
-      - name: Install dependencies
-        run: npm ci
-
-      # Step 4: Install Fly.io CLI
-      - name: Install Fly CLI
-        run: |
-          curl -L https://fly.io/install.sh | sh
-          export PATH="$HOME/.fly/bin:$PATH"
-
-      # Step 5: Generate Prisma client
-      - name: Generate Prisma client
-        run: npx prisma generate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      # Step 6: Build SvelteKit Docker image
-      - name: Build Docker image
-        run: docker build . -t todo-pipeline-front
-
-      # Step 7: Deploy to Fly.io
+      # Step 3: Deploy to Fly.io
       - name: Deploy to Fly.io
-        run: |
-          export PATH="$HOME/.fly/bin:$PATH"
-          fly deploy --remote-only --image todo-pipeline-front
+        run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
